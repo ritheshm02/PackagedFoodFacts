@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packaged Food Facts</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Packaged Food Facts</h1>
+        <form method="post">
+            <label for="query">Enter Barcode or Product Name:</label>
+            <input type="text" id="query" name="query" required>
+            <button type="submit">Evaluate</button>
+        </form>
+
+        {% if food_info %}
+            <div class="result">
+                <h2>Product Information</h2>
+                <p><strong>Product Name:</strong> {{ food_info['product_name'] }}</p>
+                <p><strong>Brand:</strong> {{ food_info['brand'] }}</p>
+                <p><strong>Category:</strong> {{ food_info['category'] }}</p>
+                <p><strong>Score:</strong> {{ food_info['score'] }}</p>
+                <p><strong>Reasons:</strong> {{ food_info['reasons'] }}</p>
+            
+                <h2>Nutritional Information (per 100g)</h2>
+                <ul>
+                    {% for nutrient, value in food_info['nutritional_info'].items() %}
+                        <li><strong>{{ nutrient }}:</strong> {{ value }}</li>
+                    {% endfor %}
+                </ul>
+                
+                <h2>Nutrition Chart</h2>
+                <canvas id="nutritionChart" width="400" height="400"></canvas>
+            
+                <h2>Recommendations</h2>
+                <p>{{ food_info['recommendations'] }}</p>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const nutritionalInfo = {{ food_info['nutritional_info']|tojson }};
+                    const labels = Object.keys(nutritionalInfo);
+                    const data = Object.values(nutritionalInfo).map(value => parseFloat(value)); // Ensure data is numeric
+                    
+                    const ctx = document.getElementById('nutritionChart').getContext('2d');
+                    const nutritionChart = new Chart(ctx, {
+                        type: 'bar', // or 'line', 'pie', etc., depending on your preference
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Nutritional Information (per 100g)',
+                                data: data,
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                });
+            </script>
+        {% elif food_info is not none %}
+            <p>Food not found in database.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
